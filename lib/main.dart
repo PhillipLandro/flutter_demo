@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_demo/pages/addPerson.dart';
-import 'package:flutter_demo/pages/start.dart';
+import 'package:flutter_demo/utils/router.dart';
 
 void main() {
   runApp(const App());
@@ -11,10 +10,8 @@ class App extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: SafeArea(
-        child: AddPersonPage() //StartPage(key: UniqueKey())
-      ),
+    return const MaterialApp(
+      onGenerateRoute: MyRouter.routes,
     );
   }
 }

@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_demo/objects/person.dart';
+import 'package:http/http.dart' as http;
 
 class StartPage extends StatefulWidget {
   StartPage({Key? key}) : super(key: key);
@@ -21,43 +24,66 @@ class _StartPage extends State<StartPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: const Text("Personen App"),
         backgroundColor: Colors.blue,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
-        child: ListView.builder(
-          itemCount: personen.length,
-          itemBuilder: (BuildContext contex, int index) {
-            return ListTile(
-              leading: const Icon(
-                Icons.person,
-                size: 40,
-              ),
-              trailing: InkWell(
-                onTap: () {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(mySnackbar(personen[index].getName()));
-                  setState(() {
-                    personen.removeAt(index);
-                  });
-                },
-                child: const Icon(
-                  Icons.delete,
-                  size: 40,
-                  color: Colors.red,
-                ),
-              ),
-              title: Text(personen[index].getName()),
-              subtitle: Text("${personen[index].getAlter()} Jahre alt"),
-            );
+        leading: IconButton(
+          icon: const Icon(Icons.autorenew),
+          onPressed: () async {
+            Person? p = await fetchPerson();
+            if (p != null) {
+              setState(() {
+                personen.add(p);
+              });
+            }
           },
         ),
       ),
+      body: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            Person? p = await fetchPerson();
+            if (p != null) {
+              setState(() {
+                personen.add(p);
+              });
+            }
+          },
+          child: ListView.builder(
+            itemCount: personen.length,
+            itemBuilder: (BuildContext contex, int index) {
+              return ListTile(
+                leading: const Icon(
+                  Icons.person,
+                  size: 40,
+                ),
+                trailing: InkWell(
+                  onTap: () {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(mySnackbar(personen[index].getName()));
+                    setState(() {
+                      personen.removeAt(index);
+                    });
+                  },
+                  child: const Icon(
+                    Icons.delete,
+                    size: 40,
+                    color: Colors.red,
+                  ),
+                ),
+                title: Text(personen[index].getName()),
+                subtitle: Text("${personen[index].getAlter()} Jahre alt"),
+              );
+            },
+          ),
+        ),
+      ),
       floatingActionButton: RawMaterialButton(
-        onPressed: () {
+        onPressed: () async {
+          Person p = await Navigator.of(context).pushNamed('/add') as Person;
           setState(() {
-            personen.add(Person("Ingo", 48));
+            personen.add(p);
           });
         },
         elevation: 2.0,
@@ -103,5 +129,15 @@ class _StartPage extends State<StartPage> {
             ],
           );
         });
+  }
+
+  Future<Person?> fetchPerson() async {
+    http.Response response =
+        await http.get(Uri.parse("https://randomname.de/?format=json&count=1"));
+    if (response.statusCode == 200) {
+      return Future.value(Person.fromJson(response.body));
+    } else {
+      return Future.value(null);
+    }
   }
 }
